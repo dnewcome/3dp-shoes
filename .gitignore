@@ -1,0 +1,28 @@
+# --- Generated build artifacts (regenerate by running the cad/ scripts) ---
+build/
+
+# --- Third-party reference files (OpenFootwear OpenRun, CC-BY-SA 4.0) ---
+# Not redistributed. Fetch locally with: python3 cad/fetch_openrun.py
+assets/openrun/
+
+# --- Geometry derived from the OpenRun reference (regenerate after fetching) ---
+# extract_panels.py -> cad/panels/ ; panelize_last.py -> cad/last_regions.npz
+cad/panels/
+cad/last_regions.npz
+
+# --- Your own input photo for trace_outline.py (point SRC at your file) ---
+vans.png
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# --- Editors / local tooling ---
+.claude/
+.vscode/
+.idea/
+.DS_Store

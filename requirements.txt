@@ -1,0 +1,13 @@
+# Tested with Python 3.12. Versions below are what this repo was developed against;
+# newer point releases are generally fine.
+build123d>=0.8.0      # parametric B-rep CAD (sole, last, panels)
+trimesh>=4.12         # mesh I/O, submesh/split, STL export
+manifold3d>=3.5       # fast, robust mesh booleans (driven directly — see notes in cad/waffle_sole.py)
+numpy>=2.0
+scipy>=1.13           # ndimage: raster segmentation of the sole/pattern images
+matplotlib>=3.8       # offscreen rendering of previews + distortion heatmaps
+networkx>=3.0         # required by trimesh .split()
+Pillow>=10.0          # image loading for the tracers
+
+# External command-line tools (not pip): `pdftocairo` (poppler-utils) is required by
+# cad/extract_panels.py to rasterize the OpenRun pattern PDF.
