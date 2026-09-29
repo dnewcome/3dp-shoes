@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shoe pattern & sewing review</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#edf0ed;color:#23352f;font:15px/1.5 system-ui,sans-serif}header{padding:20px 28px;background:#203e35;color:white}h1{margin:0;font-size:25px}header p{margin:4px 0 0;color:#d2dfd6}main{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;padding:18px}section,aside{background:#fff;border-radius:12px;overflow:hidden}aside{padding:20px}canvas{width:100%;height:65vh;min-height:400px;display:block;touch-action:none;cursor:grab;background:linear-gradient(#f6f7f4,#e3e8e2)}nav,.controls{padding:12px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}button,select{padding:7px 10px;border:1px solid #8daba0;border-radius:5px;background:white;font:inherit;color:inherit}label{white-space:nowrap}input[type=range]{flex:1;min-width:150px}h2{font-size:17px;margin:18px 0 6px}p{margin:6px 0 12px}a{color:#126751}table{font-size:12px;width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid #e2e8e2;padding:5px 3px}.status{background:#fff0d6;color:#77480a;padding:10px;border-radius:7px;font-weight:650}.hint{font-size:12px;color:#577066;padding:0 16px 12px}#legend{padding:5px 16px;font-size:12px}.small{font-size:12px;color:#597065}@media(max-width:850px){main{grid-template-columns:1fr}canvas{height:55vh}aside{order:2}}
+</style>
+<header><h1>Shoe pattern & sewing review</h1><p>OpenRun EU 42 reference · millimetres · original flat pattern rest shapes</p></header>
+<main><section>
+<nav><select id="mode" aria-label="View"><option value="sim">Sewing simulation</option><option value="initial">Initial placement</option><option value="flat">Flat pieces</option></select>
+<label><input type="checkbox" id="strain">Strain colours</label><label><input type="checkbox" id="last">Last</label><label><input type="checkbox" id="sole" checked>Printed sole</label><label><input type="checkbox" id="seams">Join lines</label><button id="reset">Reset view</button></nav>
+<canvas id="view" aria-label="Rotatable 3D shoe assembly"></canvas>
+<div id="legend">Tan: sole fabric · blue: vamp · orange: quarter · purple: tongue</div>
+<div class="controls"><button id="play">Play</button><input id="frame" type="range" min="0" step="1" aria-label="Simulation frame"><span id="frameLabel"></span></div>
+<div class="hint">Drag to orbit · scroll to zoom. The timeline shows solver output. Initial placement is a starting guess, not a fit result.</div>
+</section><aside>
+<div class="status">Prototype — not validated for cutting</div>
+<p class="small">Seams are inferred. The tongue attachment is approximate. Self collision is disabled for the overlapping lap seams. Material properties have not been measured; this cannot predict comfort or wearer fit.</p>
+<h2>Measured issues</h2><div id="summary"></div>
+<h2>Pattern downloads</h2><p><a href="../patterns/patterns_A4.pdf">A4 tiles</a> · <a href="../patterns/patterns_Letter.pdf">Letter tiles</a> · <a href="../patterns/patterns_full_size.pdf">Full-size PDF</a></p>
+<div id="patterns"></div><p class="small">Print at 100%. Check the 100 mm bar. PDFs show source side; individual SVGs include mirrored pieces. No new seam allowance has been added.</p>
+<h2>3D files & evidence</h2><p><a href="sewing.blend">Blender sewing scene</a><br><a href="shoe_prototype.glb">Assembled prototype GLB</a><br><a href="../soles/sole_source.stl">Source sole STL</a> · <a href="../soles/sole_mirrored.stl">Mirrored STL</a><br><a href="review.md">Review notes and dimensions</a><br><a href="seam_map.pdf">Annotated seam map</a></p>
+<h2>Still needed for a fitted pair</h2><p class="small">Foot length/width and ball/instep girths for both feet, upper material/thickness, seam construction, and printer build volume. A paper or scrap-fabric trial follows a successful geometry check.</p>
+<p class="small">Reference geometry: <a href="https://www.openfootwear.com/openrun.html">Open Run by Open Footwear</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.</p>
+</aside></main>
+<script>
+const DATA=__DATA__;
+const $=id=>document.getElementById(id), canvas=$('view'),ctx=canvas.getContext('2d');
+const colors=['#b8a077','#2373a1','#c67535','#845391'];
+let az=-.55,el=.75,zoom=1,drag=null,playing=false;
+const slider=$('frame');slider.max=DATA.frames.length-1;slider.value=slider.max;
+const worst=Math.max(...Object.values(DATA.report.seams).map(s=>s.max_gap_mm));
+$('summary').innerHTML=`<p class="small">Largest final seam gap: <b>${worst.toFixed(1)} mm</b>.<br>Footbed/last alignment RMS: <b>${DATA.report.registration.footbed_registration_rms_mm.toFixed(1)} mm</b>.</p><table><tr><th>Piece</th><th>95% edge strain*</th></tr>${Object.entries(DATA.report.panels).map(([k,v])=>`<tr><td>${k}</td><td>${v.p95_abs_edge_strain_percent.toFixed(1)}%</td></tr>`).join('')}</table><p class="small">*95th percentile of absolute edge strain, measured against the flat pattern. Not a material pass/fail limit.</p>`;
+$('patterns').innerHTML=DATA.patterns.map(p=>`<p class="small">${p.id} ${p.name}: ${p.width_mm.toFixed(1)} × ${p.height_mm.toFixed(1)} mm<br><a href="../patterns/${p.id}_${p.name}_source.svg">Source SVG</a> · <a href="../patterns/${p.id}_${p.name}_mirrored.svg">Mirrored SVG</a></p>`).join('');
+function project(v){const x=v[0],y=v[1]+20,z=v[2]-50;const a=x*Math.cos(az)-y*Math.sin(az),b=x*Math.sin(az)+y*Math.cos(az);return [a,b*Math.sin(el)+z*Math.cos(el),b*Math.cos(el)-z*Math.sin(el)];}
+function strainColor(value){let t=Math.min(1,Math.abs(value)/.3);return `rgb(${Math.round(40+195*t)},${Math.round(145-85*t)},${Math.round(160-110*t)})`;}
+function draw(){
+ const dpr=window.devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
+ const mode=$('mode').value,frame=DATA.frames[Number(slider.value)];const v=mode==='flat'?DATA.flat:mode==='initial'?DATA.initial:frame.vertices_mm;
+ const scale=Math.min(w/350,h/420)*zoom;const screen=q=>{const p=project(q);return [w/2+p[0]*scale,h/2-p[1]*scale,p[2]];};let polys=[];
+ function add(verts,faces,color,alpha=1,panel=false){let vs=verts.map(screen);for(let i=0;i<faces.length;i++){let f=faces[i],c=color;if(panel){c=colors[DATA.facePanels[i]];if($('strain').checked&&mode!=='flat'){let ratios=[];for(let k=0;k<3;k++){let a=f[k],b=f[(k+1)%3];const dist=(x,y)=>Math.hypot(...x.map((e,j)=>e-y[j]));ratios.push(Math.abs(dist(verts[a],verts[b])/dist(DATA.flat[a],DATA.flat[b])-1));}c=strainColor(Math.max(...ratios));}}polys.push({p:f.map(j=>vs[j]),color:c,alpha,depth:f.reduce((sum,j)=>sum+vs[j][2],0)/3});}}
+ add(v,DATA.faces,null,1,true);
+ if(mode!=='flat'&&$('sole').checked)add(DATA.sole.vertices,DATA.sole.faces,'#414d49');
+ if(mode!=='flat'&&$('last').checked)add(DATA.last.vertices,DATA.last.faces,'#bcc8bb',.22);
+ polys.sort((a,b)=>b.depth-a.depth);for(const p of polys){ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();p.p.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.fill();ctx.strokeStyle=p.color;ctx.lineWidth=.25;ctx.stroke();}ctx.globalAlpha=1;
+ if($('seams').checked){ctx.strokeStyle='#dc263c';ctx.lineWidth=1;for(const [a,b] of DATA.seamEdges){let p=screen(v[a]),q=screen(v[b]);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();}}
+ $('frameLabel').textContent=`Frame ${frame.frame}`;
+ $('legend').textContent=$('strain').checked?'Triangle maximum absolute edge strain: teal 0% → red 30% or more.':'Tan: sole fabric · blue: vamp · orange: quarter · purple: tongue';
+}
+canvas.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;az+=(e.clientX-drag[0])*.008;el=Math.max(-1.5,Math.min(1.5,el+(e.clientY-drag[1])*.008));drag=[e.clientX,e.clientY];draw()});canvas.addEventListener('pointerup',()=>drag=null);canvas.addEventListener('pointercancel',()=>drag=null);
+canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.3,Math.min(4,zoom*Math.exp(-e.deltaY*.001)));draw()},{passive:false});
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',draw));
+$('reset').onclick=()=>{az=-.55;el=.75;zoom=1;draw()};$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play'};
+setInterval(()=>{if(playing){slider.value=(Number(slider.value)+1)%DATA.frames.length;draw()}},350);window.addEventListener('resize',draw);draw();
+</script></html>

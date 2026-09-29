@@ -8,6 +8,12 @@ scipy>=1.13           # ndimage: raster segmentation of the sole/pattern images
 matplotlib>=3.8       # offscreen rendering of previews + distortion heatmaps
 networkx>=3.0         # required by trimesh .split()
 Pillow>=10.0          # image loading for the tracers
+svgpathtools>=1.6     # preserve PDF vector paths and affine transforms in millimetres
+shapely>=2.1          # outline validation, triangulation coverage and robust offsets
+fast-simplification>=0.1.10  # bounded-size last/sole meshes for assembly review
+rtree>=1.3           # last ray intersections and proximity/collision diagnostics
 
 # External command-line tools (not pip): `pdftocairo` (poppler-utils) is required by
 # cad/extract_panels.py to rasterize the OpenRun pattern PDF.
+# prepare_patterns.py also uses `pdfinfo`. Sewing uses Blender (tested on 5.2)
+# from the command line; it is not installed through pip.

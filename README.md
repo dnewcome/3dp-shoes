@@ -7,6 +7,40 @@ The goal: reverse-engineer a disassembled pair of vulcanized canvas sneakers int
 model you can actually make at home — print a flexible **cupsole** (TPU / flexible SLA resin), then
 glue and Kevlar-stitch a custom canvas upper into it. No vulcanization press required.
 
+## Dimensioned patterns and virtual sewing prototype
+
+The recovered **OpenRun EU 42** reference now has a separate, reproducible review pipeline.
+It preserves vector cut edges, notches, holes and grey marking lines; exports source/mirrored
+SVGs plus full-size, A4 and Letter PDFs; creates a mirrored waffle sole prototype pair; and
+runs an actual Blender cloth-sewing experiment with the **flat patterns as spring rest shapes**.
+
+**This is not yet a validated cutting set.** The inferred forefoot and heel joining chains
+differ from their sole counterparts by about 54 mm and 26 mm. The side overlaps match closely.
+The tongue attachment, material properties, wearer measurements and sole-to-upper contact
+remain unverified. Solver residuals are reported rather than treated as proof of fit.
+
+With the reference assets already downloaded:
+
+```bash
+python3 cad/prepare_patterns.py
+python3 cad/reference_soles.py
+python3 cad/assemble_reference.py
+blender --background --factory-startup --python cad/sew_blender.py -- --frames 120
+python3 cad/review_assembly.py
+python3 -m unittest discover -s tests -v
+```
+
+Open **`build/assembly/viewer.html`** locally for an offline, rotatable view with the solver
+timeline, strain colours, last and sole controls, and links to all outputs. Read
+**`build/assembly/review.md`** for dimensions, seam lengths, residual gaps and limitations.
+The editable scene is `build/assembly/sewing.blend`; the prototype pair is in `build/soles/`.
+Full instructions and measurement requirements: [docs/fabrication.md](docs/fabrication.md).
+Project history and current findings: [docs/progress.md](docs/progress.md).
+
+The new sole prototypes use the **OpenRun midsole**, preserving its upper surface. They are
+separate from the original traced 297 mm sneaker outsole and do not establish that those two
+designs fit each other. All reference-derived outputs remain under git-ignored `build/`.
+
 > **Not affiliated with, or endorsed by, Vans or any shoe brand.** "Waffle-style" describes the
 > diamond rib tread geometry. The sole outline here is traced from the author's own photo of a
 > worn-out shoe and is used only as a starting silhouette — swap in any outline you like.
@@ -38,9 +72,12 @@ canvas panels:
 3. **Flatten** each region to 2D with a mass-spring relaxation, and measure the residual edge
    strain — that number is the ease/stretch the canvas has to absorb.
 
-The key insight: **flattening (3D→2D) is well-posed**; it yields manufacturable patterns plus a
-quantified distortion map. The forward *drape* (2D cloth → 3D) is the ill-posed simulation that
-makes naive "flatten a shirt pattern" attempts fall apart.
+Flattening is a useful starting experiment, but a curved surface need not admit a flat layout
+without stretch, compression, darts, or overlap. The older spring-relaxation preview below
+does not certify manufacturability, preserve the published OpenRun seam layout, or check
+triangle inversion and self-overlap. Its residual strain is a geometric diagnostic, not a
+measured fabric ease allowance. Use the vector-recovery/sewing workflow above for the current
+reference investigation.
 
 ---
 
